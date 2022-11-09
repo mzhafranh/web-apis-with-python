@@ -62,5 +62,19 @@ def indexGreet():
     else:
         return jsonify({"data" : f"Hello, {fname} {lname}!"})
 
+@app.get("/square")
+def indexDraw():
+    width = int(request.args.get("width"))
+    height = int(request.args.get("height"))
+    if not width or not height:
+        return jsonify({"status" : "error", "message" : "Please specify width and height"})
+    else:
+        response = ""
+        for i in range(height):
+            for j in range(width):
+                response += "[#]"
+            response += "\n"
+        return f"<pre>{response}"
+
 
 
