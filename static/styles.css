@@ -40,7 +40,7 @@ body{
     position: relative;
 }
 
-button {
+/* button {
     margin: 1em 1em 1em 1em;
     background-image: -webkit-linear-gradient(top,#f5f5f563,#f1f1f1);
     background-color: #f2f2f200;
@@ -51,13 +51,13 @@ button {
     text-align: center;
     cursor: pointer;
     color: #5F6368;
-}
+} */
 
-button:hover {
+/* button:hover {
     box-shadow: 0 1px 6px rgba(0, 0, 0, 1);
     background-image: -webkit-linear-gradient(top,#f8f8f8,#f1f1f1);
     background-color: #f8f8f8;
     border: 1px solid #c6c6c6;
     color: #222;
     border-radius: 16px;
-}
+} */
