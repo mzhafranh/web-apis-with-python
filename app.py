@@ -18,8 +18,6 @@ mydb = mysql.connector.connect(
   database="accidents"
 )
 
-
-
 app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/accidents'
 app.config['SECRET_KEY'] = 'supersecretkey@$&*!'
@@ -76,6 +74,12 @@ class create_dict(dict):
     # Function to add key:value 
     def add(self, key, value): 
         self[key] = value
+
+    def inc(self, key, value):
+        if (self.get(key)):
+            self[key] += value
+        else:
+            self[key] = value
 
 
 @app.post("/registerapi/")
@@ -217,16 +221,19 @@ def searchReport():
         currdate = startdate
 
         statdict = create_dict()
+        
 
         while (currdate != enddate):
+            statedict = create_dict()
             nextdate = currdate + datetime.timedelta(days=1)
             cursor.execute("SELECT * FROM report WHERE start_time BETWEEN %s AND %s", [currdate, nextdate])
             result = cursor.fetchall()
             severity_avg = 0
             for row in result:
                 severity_avg += row[1]
+                statedict.inc(row[15],1)
             severity_avg = float(severity_avg / len(result))
-            statdict.add(str(currdate), ({"date": str(currdate), "total accidents": len(result), "avg severity" : str(round(severity_avg, 2))}))
+            statdict.add(str(currdate), ({"date": str(currdate), "total accidents": len(result), "avg severity" : str(round(severity_avg, 2)), "sate": [statedict]}))
             currdate = nextdate
 
         cursor.execute("SELECT * FROM report WHERE start_time BETWEEN %s AND %s", [startdate, enddate])
