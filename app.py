@@ -241,7 +241,7 @@ def searchReport():
         datadict = create_dict()
 
         for row in result:
-            datadict.add(row[0],({"id":row[0],"severity":row[1],"start_time":row[2],"county":row[14],"state":row[15]}))
+            datadict.add(row[0],({"id":row[0],"severity":row[1],"start time":row[2],"county":row[14],"state":row[15]}))
 
         data = jsonify({"code":200, "status": "success", "statistic" : [statdict], "data": [datadict]})
 
