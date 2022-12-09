@@ -251,8 +251,6 @@ def searchReport():
         data = jsonify({"code":400, "status": "fail", "message": "Please specify startdate and enddate"})
         return (data)
 
-
-
 @app.post("/reportadd/")
 @login_required
 @token_required
