@@ -242,7 +242,6 @@ def searchReport():
 
     else:
         data = jsonify({"code":400, "status": "fail", "message": "Please specify startdate and enddate"})
-
         return (data)
 
 
