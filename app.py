@@ -81,6 +81,9 @@ class create_dict(dict):
         else:
             self[key] = value
 
+@app.get("/login")
+def indexLogin():
+    return jsonify({"code" : 400, "status": "fail", "message" : "[ERROR] Please log in first using /loginapi/ with email and password"}) 
 
 @app.post("/registerapi/")
 def addUserAPI():
@@ -266,7 +269,7 @@ def addReport():
     end_lat = float(request.args.get("end_lat"))
     end_lng = float(request.args.get("end_lng"))
 
-    query = ("INSERT INTO report VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+    query = ("INSERT INTO report (id, severity, start_time, end_time, start_lat, start_lng, end_lat, end_lng) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
     values = (id, severity, start_time, end_time, start_lat, start_lng, end_lat, end_lng)
     
     cursor.execute(query, values)
@@ -324,85 +327,6 @@ def testArray():
     for i in range (len(start_lats)):
         coords.append((float(start_lats[i]),float(start_lngs[i]),float(end_lats[i]),float(end_lngs[i])))
     return (coords)
-
-# @app.get("/register")
-# def indexRegister():
-#     return render_template("register.html")
-
-# @app.post("/register/")
-# def addUser():
-#     email = request.form.get("email")
-#     username = request.form.get("username")
-#     password = request.form.get("password")
-#     role = request.form.get("role")
-
-#     cursor = mydb.cursor()
-#     cursor.execute("SELECT * FROM user WHERE email = %s", [email])
-#     result = cursor.fetchall()
-#     if (len(result) > 0):
-#         return "[ERROR] Email sudah terdaftar" 
-#     else:
-#         hashed_password = bcrypt.generate_password_hash(password)
-#         cursor.execute("INSERT INTO user (email, username, password, role) VALUES (%s, %s, %s, %s)", [email, username, hashed_password, role])
-#         mydb.commit() 
-#         return redirect(url_for('indexLogin'))
-
-# @app.get("/login")
-# def indexLogin():
-#     return render_template("login.html")
-
-# @app.post("/login/")
-# def userLogin():
-#     email = request.form.get("email")
-#     password = request.form.get("password")
-
-#     cursor = mydb.cursor()
-#     cursor.execute("SELECT * FROM user WHERE email = %s", [email])
-#     result = cursor.fetchall()
-#     if (len(result) > 0):
-#         if(bcrypt.check_password_hash(result[0][3],password)):
-#             token = jwt.encode({'user_id' : result[0][0], 'email' : result[0][1], 'exp' : datetime.datetime.utcnow() + datetime.timedelta(seconds=3600)}, app.config['SECRET_KEY'])
-#             user = User.get(result[0][0])
-#             login_user(user)
-#             # return redirect(f"/?token={token}")
-
-#             sender_address = "bukanjeprun@gmail.com"
-#             sender_pass = "ijvacbyiqhyvpobp"
-#             receiver_address = result[0][1]
-
-#             mail_content = f'''Hello,
-# This is your access token to Z-API
-
-# localhost:5000/?token={token}
-
-# Thank You for using our service.
-# '''
-#             message = MIMEMultipart()
-#             message['From'] = sender_address
-#             message['To'] = receiver_address
-#             message['Subject'] = 'Your token to Z-API' 
-
-#             message.attach(MIMEText(mail_content, 'plain'))
-
-#             try:
-#                 session = smtplib.SMTP('smtp.gmail.com',587)
-#                 session.set_debuglevel(1)
-#                 session.starttls()
-#                 session.login(sender_address, sender_pass)
-#                 text = message.as_string()
-#                 session.sendmail(sender_address, receiver_address, text)
-#                 session.quit()
-#                 print('email has been sent')
-#             except:
-#                 print('email could not be sent')
-
-#             return redirect(url_for('email'))
-
-#         else:
-#             return jsonify({"code" : 400, "status": "fail", "message":"[ERROR] Invalid username or password"})
-#     else: 
-#         return jsonify({"code" : 400, "status": "fail", "message":"[ERROR] Invalid username or password"})
-
 
 if __name__ == "__main__":
     app.run()
