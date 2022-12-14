@@ -9,6 +9,7 @@ import pyotp
 import datetime
 import jwt
 import requests
+import pandas
 
 import mysql.connector
 mydb = mysql.connector.connect(
@@ -234,7 +235,7 @@ def searchReport():
             severity_avg = 0
             for row in result:
                 severity_avg += row[1]
-                statedict.inc(row[15],1)
+                statedict.inc(row[4],1)
             severity_avg = float(severity_avg / len(result))
             statdict.add(str(currdate), ({"date": str(currdate), "total accidents": len(result), "avg severity" : str(round(severity_avg, 2)), "sate": [statedict]}))
             currdate = nextdate
@@ -243,10 +244,12 @@ def searchReport():
         result = cursor.fetchall()
         datadict = create_dict()
 
-        for row in result:
-            datadict.add(row[0],({"id":row[0],"severity":row[1],"start time":row[2],"county":row[14],"state":row[15]}))
+        # for row in result:
+        #     datadict.add(row[0],({"id":row[0],"severity":row[1],"start time":row[2],"county":row[14],"state":row[15]}))
 
-        data = jsonify({"code":200, "status": "success", "statistic" : [statdict], "data": [datadict]})
+        # data = jsonify({"code":200, "status": "success", "statistic" : [statdict], "data": [datadict]})
+
+        data = jsonify({"code":200, "status": "success", "statistic" : [statdict]})
 
         return (data)
 
@@ -263,14 +266,11 @@ def addReport():
     id = request.args.get("id")
     severity = int(request.args.get("severity"))
     start_time = request.args.get("start_time")
-    end_time = request.args.get("end_time")
-    start_lat = float(request.args.get("start_lat"))
-    start_lng = float(request.args.get("start_lng"))
-    end_lat = float(request.args.get("end_lat"))
-    end_lng = float(request.args.get("end_lng"))
+    county = request.args.get("county")
+    state = request.args.get("state")
 
-    query = ("INSERT INTO report (id, severity, start_time, end_time, start_lat, start_lng, end_lat, end_lng) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
-    values = (id, severity, start_time, end_time, start_lat, start_lng, end_lat, end_lng)
+    query = ("INSERT INTO report (id, severity, start_time, county, state) VALUES (%s, %s, %s, %s, %s)")
+    values = (id, severity, start_time, county, state)
     
     cursor.execute(query, values)
 
@@ -301,15 +301,12 @@ def editReport():
     new_id = request.args.get("new_id")
     severity = int(request.args.get("severity"))
     start_time = request.args.get("start_time")
-    end_time = request.args.get("end_time")
-    start_lat = float(request.args.get("start_lat"))
-    start_lng = float(request.args.get("start_lng"))
-    end_lat = float(request.args.get("end_lat"))
-    end_lng = float(request.args.get("end_lng"))
+    county = request.args.get("county")
+    state = request.args.get("state")
     old_id = request.args.get("old_id")
 
-    query = ("UPDATE report SET id = %s, severity = %s, start_time = %s, end_time = %s, start_lat = %s, start_lng = %s, end_lat = %s, end_lng = %s WHERE id = %s")
-    values = (new_id, severity, start_time, end_time, start_lat, start_lng, end_lat, end_lng, old_id)
+    query = ("UPDATE report SET id = %s, severity = %s, start_time = %s, county = %s, state = %s WHERE id = %s")
+    values = (new_id, severity, start_time, county, state, old_id)
     
     cursor.execute(query, values)
 
@@ -317,16 +314,16 @@ def editReport():
 
     return jsonify({"code" : 200, "status": "successs", "message":"[SUCCESS] Record updated"})
 
-@app.post("/array/")
-def testArray():
-    start_lats = list((request.args.get("start_lat")).split(","))
-    start_lngs = list((request.args.get("start_lng")).split(","))
-    end_lats = list((request.args.get("end_lat")).split(","))
-    end_lngs = list((request.args.get("end_lng")).split(","))
-    coords = []
-    for i in range (len(start_lats)):
-        coords.append((float(start_lats[i]),float(start_lngs[i]),float(end_lats[i]),float(end_lngs[i])))
-    return (coords)
+# @app.post("/array/")
+# def testArray():
+#     start_lats = list((request.args.get("start_lat")).split(","))
+#     start_lngs = list((request.args.get("start_lng")).split(","))
+#     end_lats = list((request.args.get("end_lat")).split(","))
+#     end_lngs = list((request.args.get("end_lng")).split(","))
+#     coords = []
+#     for i in range (len(start_lats)):
+#         coords.append((float(start_lats[i]),float(start_lngs[i]),float(end_lats[i]),float(end_lngs[i])))
+#     return (coords)
 
 if __name__ == "__main__":
     app.run()
