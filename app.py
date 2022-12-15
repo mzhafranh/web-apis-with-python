@@ -84,7 +84,7 @@ class create_dict(dict):
 
 @app.get("/login")
 def indexLogin():
-    return jsonify({"code" : 400, "status": "fail", "message" : "[ERROR] Please log in first using /loginapi/ with email and password"}) 
+    return jsonify({"code" : 400, "status" : "fail", "message" : "[ERROR] Please log in first using /loginapi/ with email and password"}) 
 
 @app.post("/registerapi/")
 def addUserAPI():
@@ -97,12 +97,12 @@ def addUserAPI():
     cursor.execute("SELECT * FROM user WHERE email = %s", [email])
     result = cursor.fetchall()
     if (len(result) > 0):
-        return jsonify({"code" : 400, "status": "fail", "message" : "[ERROR] Email already registered!"}) 
+        return jsonify({"code" : 400, "status" : "fail", "message" : "[ERROR] Email already registered!"}) 
     else:
         hashed_password = bcrypt.generate_password_hash(password)
         cursor.execute("INSERT INTO user (email, username, password, role) VALUES (%s, %s, %s, %s)", [email, username, hashed_password, role])
         mydb.commit() 
-        return jsonify({"code" : 200, "status": "success", "message" : "[SUCCESS] Account succesfully created"})
+        return jsonify({"code" : 200, "status" : "success", "message" : "[SUCCESS] Account succesfully created"})
 
 
 @app.post("/loginapi/")
@@ -115,14 +115,14 @@ def userLoginAPI():
     result = cursor.fetchall()
     if (len(result) > 0):
         if(bcrypt.check_password_hash(result[0][3],password)):
-            token = jwt.encode({'user_id' : result[0][0], 'email' : result[0][1], 'exp' : datetime.datetime.utcnow() + datetime.timedelta(seconds=10000)}, app.config['SECRET_KEY'])
+            token = jwt.encode({'user_id' : result[0][0], 'email' : result[0][1], 'exp' : datetime.datetime.utcnow() + datetime.timedelta(seconds=20)}, app.config['SECRET_KEY'])
             user = User.get(result[0][0])
             login_user(user)
-            return jsonify({"code" : 200, "status": "success", "message":"[SUCCESS] Login Success", "Token" : str(token)})
+            return jsonify({"code" : 200, "status" : "success", "message":"[SUCCESS] Login Success", "Token" : str(token)})
         else:
-            return jsonify({"code" : 400, "status": "fail", "message":"[ERROR] Invalid username or password"})
+            return jsonify({"code" : 400, "status" : "fail", "message":"[ERROR] Invalid username or password"})
     else: 
-        return jsonify({"code" : 400, "status": "fail", "message":"[ERROR] Invalid username or password"})
+        return jsonify({"code" : 400, "status" : "fail", "message":"[ERROR] Invalid username or password"})
 
 
 @app.post("/registerapiotp/")
@@ -136,7 +136,7 @@ def addUserAPIOTP():
     cursor.execute("SELECT * FROM user WHERE email = %s", [email])
     result = cursor.fetchall()
     if (len(result) > 0):
-        return jsonify({"code" : 400, "status": "fail", "message" : "[ERROR] Email already registered!"}) 
+        return jsonify({"code" : 400, "status" : "fail", "message" : "[ERROR] Email already registered!"}) 
     else:
         hashed_password = bcrypt.generate_password_hash(password)
         cursor.execute("INSERT INTO user (email, username, password, role) VALUES (%s, %s, %s, %s)", [email, username, hashed_password, role])
@@ -170,7 +170,7 @@ Submit this generated key in the form.
         session.sendmail(sender_address, receiver_address, text)
         session.quit()
 
-        return jsonify({"code" : 200, "status": "success", "message" : "[SUCCESS] Account succesfully created, Check your email for 2FA setup"})
+        return jsonify({"code" : 200, "status" : "success", "message" : "[SUCCESS] Account succesfully created, Check your email for 2FA setup"})
 
 
 @app.post("/loginapiotp/")
@@ -189,13 +189,13 @@ def userLoginAPIOTP():
                 token = jwt.encode({'user_id' : result[0][0], 'email' : result[0][1], 'exp' : datetime.datetime.utcnow() + datetime.timedelta(seconds=20)}, app.config['SECRET_KEY'])
                 user = User.get(result[0][0])
                 login_user(user)        
-                return jsonify({"code" : 200, "status": "success", "message":"[SUCCESS] Login success.", "Token" : str(token)})
+                return jsonify({"code" : 200, "status" : "success", "message":"[SUCCESS] Login success.", "Token" : str(token)})
             else:
-                return jsonify({"code" : 400, "status": "fail", "message":"[ERROR] 2FA Failed"})
+                return jsonify({"code" : 400, "status" : "fail", "message":"[ERROR] 2FA Failed"})
         else:
-            return jsonify({"code" : 400, "status": "fail", "message":"[ERROR] Invalid username or password"})
+            return jsonify({"code" : 400, "status" : "fail", "message":"[ERROR] Invalid username or password"})
     else: 
-        return jsonify({"code" : 400, "status": "fail", "message":"[ERROR] Invalid username or password"})
+        return jsonify({"code" : 400, "status" : "fail", "message":"[ERROR] Invalid username or password"})
 
 @app.get("/email")
 @login_required
@@ -229,6 +229,7 @@ def searchReport():
 
         while (currdate != enddate):
             statedict = create_dict()
+            countydict = create_dict()
             nextdate = currdate + datetime.timedelta(days=1)
             cursor.execute("SELECT * FROM report WHERE start_time BETWEEN %s AND %s", [currdate, nextdate])
             result = cursor.fetchall()
@@ -236,26 +237,30 @@ def searchReport():
             for row in result:
                 severity_avg += row[1]
                 statedict.inc(row[4],1)
+                countydict.inc(row[3] + ' - ' + row[4], 1)
             severity_avg = float(severity_avg / len(result))
-            statdict.add(str(currdate), ({"date": str(currdate), "total accidents": len(result), "avg severity" : str(round(severity_avg, 2)), "sate": [statedict]}))
+            statdict.add(str(currdate), ({"date": str(currdate), "total accidents": len(result), "avg severity" : str(round(severity_avg, 2)), "sate": [statedict], "county": [countydict]}))
             currdate = nextdate
 
-        cursor.execute("SELECT * FROM report WHERE start_time BETWEEN %s AND %s", [startdate, enddate])
-        result = cursor.fetchall()
-        datadict = create_dict()
-
-        # for row in result:
-        #     datadict.add(row[0],({"id":row[0],"severity":row[1],"start time":row[2],"county":row[14],"state":row[15]}))
-
-        # data = jsonify({"code":200, "status": "success", "statistic" : [statdict], "data": [datadict]})
-
-        data = jsonify({"code":200, "status": "success", "statistic" : [statdict]})
-
+        data = jsonify({"code":200, "status" : "success", "statistic" : [statdict]})
         return (data)
 
     else:
-        data = jsonify({"code":400, "status": "fail", "message": "Please specify startdate and enddate"})
+        data = jsonify({"code":400, "status" : "fail", "message": "Please specify startdate and enddate"})
         return (data)
+
+@app.get("/reportread/")
+@login_required
+@token_required
+def readReport():
+    cursor = mydb.cursor()
+    datadict = create_dict()
+    cursor.execute("SELECT * FROM report")
+    result = cursor.fetchall()
+    for row in result:
+        datadict.add(row[0], ({"id": row[0], "severity" : row[1], "start_time" : str(row[2]), "county" : row[3], "state" : row[4]}))
+    data = jsonify({"code":200, "status" : "success", "data" : [datadict]})
+    return (data)
 
 @app.post("/reportadd/")
 @login_required
@@ -276,7 +281,7 @@ def addReport():
 
     mydb.commit()
 
-    return jsonify({"code" : 200, "status": "successs", "message":"[SUCCESS] Record inserted"})
+    return jsonify({"code" : 200, "status" : "successs", "message":"[SUCCESS] Record inserted"})
 
 @app.delete("/reportdel/")
 @login_required
@@ -290,7 +295,7 @@ def deleteReport():
 
     mydb.commit()
 
-    return jsonify({"code" : 200, "status": "successs", "message":"[SUCCESS] Record has been deleted"})
+    return jsonify({"code" : 200, "status" : "successs", "message":"[SUCCESS] Record has been deleted"})
 
 @app.put("/reportedit/")
 @login_required
@@ -312,18 +317,14 @@ def editReport():
 
     mydb.commit()
 
-    return jsonify({"code" : 200, "status": "successs", "message":"[SUCCESS] Record updated"})
+    return jsonify({"code" : 200, "status" : "successs", "message":"[SUCCESS] Record updated"})
 
-# @app.post("/array/")
-# def testArray():
-#     start_lats = list((request.args.get("start_lat")).split(","))
-#     start_lngs = list((request.args.get("start_lng")).split(","))
-#     end_lats = list((request.args.get("end_lat")).split(","))
-#     end_lngs = list((request.args.get("end_lng")).split(","))
-#     coords = []
-#     for i in range (len(start_lats)):
-#         coords.append((float(start_lats[i]),float(start_lngs[i]),float(end_lats[i]),float(end_lngs[i])))
-#     return (coords)
+@app.put("/visualize/")
+@login_required
+@token_required
+def visualize():
+    return "uwu"
+
 
 if __name__ == "__main__":
     app.run()
